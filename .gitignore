@@ -1,0 +1,31 @@
+# Agent / AI context (internal, not for repo)
+.agents/
+AGENTS.md
+
+# Gradle
+.gradle/
+build/
+**/build/
+local.properties
+*.iml
+
+# Android Studio
+.idea/
+*.iws
+*.ipr
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+*.kotlin_module
+.kotlin/
+
+# Keys & secrets
+keystore.properties
+*.jks
+*.keystore
+
+# OS
+.DS_Store
+Thumbs.db

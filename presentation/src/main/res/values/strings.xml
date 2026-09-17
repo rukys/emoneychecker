@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App & Header -->
+    <string name="app_name">E-Money Checker</string>
+    <string name="nfc_status_active">NFC AKTIF</string>
+    <string name="nfc_status_inactive">NFC MATI</string>
+    <string name="version_label">v1.0.0</string>
+
+    <!-- Idle State -->
+    <string name="idle_card_prompt">TEMPEL KARTU DI SINI</string>
+    <string name="idle_instruction">Tempel kartu e-money di belakang HP</string>
+    <string name="idle_supported_cards">Mandiri e-Money · Flazz · TapCash · Brizzi</string>
+
+    <!-- Reading State -->
+    <string name="reading_status">Membaca...</string>
+    <string name="reading_hold_still">Tahan kartu tetap menempel</string>
+
+    <!-- Success State -->
+    <string name="success_last_read_label">Terakhir tap:</string>
+    <string name="success_last_read_just_now">Baru saja</string>
+    <string name="success_last_read_seconds">%d detik lalu</string>
+    <string name="success_last_read_minutes">%d menit lalu</string>
+    <string name="action_copy_balance">Salin Saldo</string>
+    <string name="action_reset">Reset Tampilan</string>
+    <string name="action_card_info">Info Kartu</string>
+    <string name="copy_balance_toast">Saldo disalin ke clipboard</string>
+    <string name="currency_symbol">Rp</string>
+
+    <!-- Error States -->
+    <string name="error_tag_lost_title">KARTU TERLEPAS</string>
+    <string name="error_tag_lost_subtitle">Tahan kartu 1 detik lagi</string>
+    <string name="error_unsupported_title">KARTU TIDAK DIDUKUNG</string>
+    <string name="error_unsupported_generic">Saat ini mendukung e-Money Mandiri, Flazz Gen 2, Brizzi, dan TapCash.</string>
+    <string name="error_unsupported_flazz_gen1_title">FLAZZ TIPE LAMA</string>
+    <string name="error_unsupported_flazz_gen1_subtitle">Chip kartu belum mendukung NFC smartphone</string>
+    <string name="error_timeout_title">PEMBACAAN TIMEOUT</string>
+    <string name="error_timeout_subtitle">Tempel kartu lebih dekat dan tahan diam</string>
+    <string name="error_nfc_disabled_title">NFC TIDAK AKTIF</string>
+    <string name="error_nfc_disabled_subtitle">Aktifkan NFC untuk membaca kartu</string>
+    <string name="error_nfc_cta_button">Aktifkan NFC</string>
+    <string name="error_unknown_title">GAGAL MEMBACA</string>
+    <string name="error_unknown_subtitle">Coba tempel kartu kembali</string>
+
+    <!-- Bank Names -->
+    <string name="bank_mandiri">Mandiri e-money</string>
+    <string name="bank_bca_flazz">BCA Flazz</string>
+    <string name="bank_bni_tapcash">BNI TapCash</string>
+    <string name="bank_bri_brizzi">BRI Brizzi</string>
+    <string name="bank_unknown">Kartu Tidak Dikenal</string>
+
+    <!-- Content Descriptions -->
+    <string name="cd_nfc_icon">Ikon NFC</string>
+    <string name="cd_card_area">Area scan kartu</string>
+    <string name="cd_copy_button">Salin nominal saldo ke clipboard</string>
+    <string name="cd_reset_button">Bersihkan tampilan kartu dari layar</string>
+    <string name="cd_nfc_settings_button">Buka pengaturan NFC</string>
+</resources>
