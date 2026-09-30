@@ -27,9 +27,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -381,6 +391,10 @@ private fun SuccessCardContent(cardInfo: CardInfo) {
     val bankAccent = EmoneyColors.forBank(cardInfo.bank)
     val formattedBalance = NumberFormat.getNumberInstance(Locale.forLanguageTag("id-ID"))
         .format(cardInfo.balanceRupiah)
+    val context = LocalContext.current
+    val copyPanToast = stringResource(R.string.copy_pan_toast)
+    val togglePanDesc = stringResource(R.string.cd_toggle_pan)
+    var isPanVisible by remember(cardInfo) { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
@@ -434,22 +448,84 @@ private fun SuccessCardContent(cardInfo: CardInfo) {
                 ContactlessWaveIcon(color = bankAccent.copy(alpha = 0.85f))
             }
 
-            // Row 2: EMV Chip + Masked PAN (dedicated horizontal row, zero collision)
+            // Row 2: EMV Chip + PAN Display with Toggle & Copy
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 CardEmvChip()
-                Text(
-                    text = cardInfo.maskedPan,
-                    style = EmoneyTypography.CardNumberMasked.copy(
-                        fontSize = 13.sp,
-                        letterSpacing = 0.12.em,
-                        fontWeight = FontWeight.Medium
-                    ),
-                    color = EmoneyColors.TextSecondary
-                )
+
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(
+                            if (isPanVisible) bankAccent.copy(alpha = 0.15f)
+                            else EmoneyColors.SurfaceLevel2.copy(alpha = 0.5f)
+                        )
+                        .border(
+                            width = 0.8.dp,
+                            color = if (isPanVisible) bankAccent.copy(alpha = 0.5f) else EmoneyColors.DividerStroke.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(6.dp)
+                        )
+                        .clickable(enabled = cardInfo.fullPan != null) {
+                            if (!isPanVisible) {
+                                isPanVisible = true
+                            } else {
+                                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                val cleanPan = (cardInfo.fullPan ?: cardInfo.maskedPan).replace(" ", "")
+                                clipboard?.setPrimaryClip(ClipData.newPlainText("Card Number", cleanPan))
+                                Toast.makeText(context, copyPanToast, Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .semantics { contentDescription = togglePanDesc }
+                ) {
+                    val panText = if (isPanVisible) (cardInfo.fullPan ?: cardInfo.maskedPan) else cardInfo.maskedPan
+                    Text(
+                        text = panText,
+                        style = EmoneyTypography.CardNumberMasked.copy(
+                            fontSize = 12.5.sp,
+                            letterSpacing = 0.10.em,
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = if (isPanVisible) EmoneyColors.TextPrimary else EmoneyColors.TextSecondary
+                    )
+
+                    if (cardInfo.fullPan != null) {
+                        if (isPanVisible) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(CircleShape)
+                                    .clickable {
+                                        val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+                                        val cleanPan = (cardInfo.fullPan ?: cardInfo.maskedPan).replace(" ", "")
+                                        clipboard?.setPrimaryClip(ClipData.newPlainText("Card Number", cleanPan))
+                                        Toast.makeText(context, copyPanToast, Toast.LENGTH_SHORT).show()
+                                    }
+                                    .padding(2.dp)
+                            ) {
+                                CopyIcon(tint = bankAccent)
+                            }
+                        }
+
+                        Box(
+                            modifier = Modifier
+                                .clip(CircleShape)
+                                .clickable {
+                                    isPanVisible = !isPanVisible
+                                }
+                                .padding(2.dp)
+                        ) {
+                            EyeToggleIcon(
+                                isVisible = isPanVisible,
+                                tint = if (isPanVisible) bankAccent else EmoneyColors.TextTertiary
+                            )
+                        }
+                    }
+                }
             }
 
             // Row 3: Hero Balance Display
@@ -611,5 +687,87 @@ private fun formatRelativeTimestamp(readTime: Instant): String {
         else -> DateTimeFormatter.ofPattern("HH:mm")
             .withZone(ZoneId.systemDefault())
             .format(readTime)
+    }
+}
+
+@Composable
+private fun EyeToggleIcon(
+    isVisible: Boolean,
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier.size(16.dp)) {
+        val w = size.width
+        val h = size.height
+        val strokeWidth = 1.5.dp.toPx()
+
+        // Eye almond outline
+        val eyePath = Path().apply {
+            moveTo(0.06f * w, 0.5f * h)
+            cubicTo(
+                0.26f * w, 0.15f * h,
+                0.74f * w, 0.15f * h,
+                0.94f * w, 0.5f * h
+            )
+            cubicTo(
+                0.74f * w, 0.85f * h,
+                0.26f * w, 0.85f * h,
+                0.06f * w, 0.5f * h
+            )
+            close()
+        }
+
+        drawPath(
+            path = eyePath,
+            color = tint,
+            style = Stroke(width = strokeWidth, cap = StrokeCap.Round)
+        )
+
+        // Center pupil
+        drawCircle(
+            color = tint,
+            radius = 0.18f * w,
+            center = Offset(0.5f * w, 0.5f * h)
+        )
+
+        // Slashed diagonal if hidden
+        if (!isVisible) {
+            drawLine(
+                color = tint,
+                start = Offset(0.12f * w, 0.88f * h),
+                end = Offset(0.88f * w, 0.12f * h),
+                strokeWidth = strokeWidth * 1.15f,
+                cap = StrokeCap.Round
+            )
+        }
+    }
+}
+
+@Composable
+private fun CopyIcon(
+    tint: Color,
+    modifier: Modifier = Modifier
+) {
+    Canvas(modifier = modifier.size(14.dp)) {
+        val w = size.width
+        val h = size.height
+        val stroke = 1.3.dp.toPx()
+
+        // Back page
+        drawRoundRect(
+            color = tint.copy(alpha = 0.6f),
+            topLeft = Offset(0.28f * w, 0.06f * h),
+            size = Size(0.62f * w, 0.72f * h),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()),
+            style = Stroke(width = stroke)
+        )
+        // Front page
+        drawRoundRect(
+            color = tint,
+            topLeft = Offset(0.08f * w, 0.22f * h),
+            size = Size(0.62f * w, 0.72f * h),
+            cornerRadius = androidx.compose.ui.geometry.CornerRadius(2.dp.toPx()),
+            style = Stroke(width = stroke)
+        )
     }
 }

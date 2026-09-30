@@ -6,5 +6,6 @@ data class CardInfo(
     val bank: CardBank,
     val maskedPan: String,
     val balanceRupiah: Long,
-    val readTimestamp: Instant = Instant.now()
+    val readTimestamp: Instant = Instant.now(),
+    val fullPan: String? = null
 )

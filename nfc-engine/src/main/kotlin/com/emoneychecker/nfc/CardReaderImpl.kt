@@ -57,10 +57,10 @@ class CardReaderImpl(
 
     private fun Throwable.toNfcError(): NfcError = when (this) {
         is TagLostException -> NfcError.TagLost
-        is IOException -> if (message?.contains("timeout", ignoreCase = true) == true) {
-            NfcError.Timeout
-        } else {
-            NfcError.Unknown(this)
+        is IOException -> when {
+            message?.contains("timeout", ignoreCase = true) == true -> NfcError.Timeout
+            message?.contains("lost", ignoreCase = true) == true -> NfcError.TagLost
+            else -> NfcError.Unknown(this)
         }
         is UnsupportedOperationException -> NfcError.UnsupportedCard(message ?: "Unsupported")
         is NfcError -> this

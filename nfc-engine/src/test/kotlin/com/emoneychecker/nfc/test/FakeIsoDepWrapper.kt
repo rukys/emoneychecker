@@ -4,9 +4,9 @@ import com.emoneychecker.nfc.apdu.IsoDepWrapper
 import java.io.IOException
 
 class FakeIsoDepWrapper(
-    private val responses: Map<String, ByteArray>
+    private val responses: Map<String, ByteArray>,
+    private var connected: Boolean = true
 ) : IsoDepWrapper {
-    private var connected = false
     var closeCallCount = 0
 
     override fun connect() {

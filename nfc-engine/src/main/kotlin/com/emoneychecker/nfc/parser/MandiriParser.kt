@@ -6,6 +6,7 @@ import com.emoneychecker.nfc.apdu.IsoDepWrapper
 import com.emoneychecker.nfc.apdu.hexToByteArray
 import com.emoneychecker.nfc.apdu.isSuccess
 import com.emoneychecker.nfc.apdu.payload
+import com.emoneychecker.nfc.apdu.transceiveOrNull
 import java.io.IOException
 
 class MandiriParser : CardParser {
@@ -21,12 +22,16 @@ class MandiriParser : CardParser {
         val AID_FALLBACK = "00 A4 04 00 07 A0 00 00 00 03 00 00".hexToByteArray()
         val READ_BALANCE = "00 B0 00 00 10".hexToByteArray()
 
-        val CANDIDATE_AIDS = listOf(
+        // Specific Mandiri AIDs only (without generic Visa AID_FALLBACK)
+        val PRIMARY_AIDS = listOf(
             AID_EMONEY,
             AID_PRIMARY,
             "00 A4 04 00 09 A0 00 00 00 03 86 98 07 01".hexToByteArray(),
             "00 A4 04 00 09 A0 00 00 00 03 86 98 07 01 00".hexToByteArray(),
-            "00 A4 04 00 08 A0 00 00 00 03 86 98 07".hexToByteArray(),
+            "00 A4 04 00 08 A0 00 00 00 03 86 98 07".hexToByteArray()
+        )
+
+        val CANDIDATE_AIDS = PRIMARY_AIDS + listOf(
             AID_FALLBACK,
             "00 A4 04 00 07 A0 00 00 00 03 00 00 00".hexToByteArray()
         )
@@ -42,18 +47,20 @@ class MandiriParser : CardParser {
 
     override suspend fun parse(isoDep: IsoDepWrapper): CardInfo {
         // Try AID_EMONEY flow first
-        val emoneySelect = runCatching { isoDep.transceive(AID_EMONEY) }.getOrNull()
+        val emoneySelect = isoDep.transceiveOrNull(AID_EMONEY)
         if (emoneySelect?.isSuccess() == true) {
             var maskedPan = "6032 •••• •••• 8812"
-            val numberResp = runCatching { isoDep.transceive(READ_CARD_NUMBER) }.getOrNull()
+            var fullPan: String? = null
+            val numberResp = isoDep.transceiveOrNull(READ_CARD_NUMBER)
             if (numberResp?.isSuccess() == true && numberResp.payload().size >= 8) {
                 val hexPan = numberResp.payload().take(8).joinToString("") { "%02X".format(it) }
                 if (hexPan.length == 16) {
                     maskedPan = "${hexPan.take(4)} •••• •••• ${hexPan.takeLast(4)}"
+                    fullPan = hexPan.chunked(4).joinToString(" ")
                 }
             }
 
-            val balanceResp = runCatching { isoDep.transceive(READ_BALANCE_B5) }.getOrNull()
+            val balanceResp = isoDep.transceiveOrNull(READ_BALANCE_B5)
             if (balanceResp?.isSuccess() == true && balanceResp.payload().size >= 4) {
                 val b = balanceResp.payload()
                 val balanceRupiah = (b[0].toLong() and 0xFF) or
@@ -64,7 +71,8 @@ class MandiriParser : CardParser {
                 return CardInfo(
                     bank = bank,
                     maskedPan = maskedPan,
-                    balanceRupiah = balanceRupiah
+                    balanceRupiah = balanceRupiah,
+                    fullPan = fullPan
                 )
             }
         }
@@ -72,7 +80,7 @@ class MandiriParser : CardParser {
         // Fallback for other candidate AIDs
         var selected = false
         for (aid in CANDIDATE_AIDS) {
-            val resp = runCatching { isoDep.transceive(aid) }.getOrNull()
+            val resp = isoDep.transceiveOrNull(aid)
             if (resp?.isSuccess() == true) {
                 selected = true
                 break
@@ -82,7 +90,7 @@ class MandiriParser : CardParser {
         var balanceResp: ByteArray? = null
         var isLittleEndian = false
         for (cmd in CANDIDATE_READ_COMMANDS) {
-            val resp = runCatching { isoDep.transceive(cmd) }.getOrNull()
+            val resp = isoDep.transceiveOrNull(cmd)
             if (resp?.isSuccess() == true && resp.payload().size >= 4) {
                 balanceResp = resp
                 if (cmd.contentEquals(READ_BALANCE_B5)) {
@@ -96,7 +104,7 @@ class MandiriParser : CardParser {
             if (!selected) {
                 throw UnsupportedOperationException("Mandiri AID selection failed")
             }
-            throw IOException("Failed to read Mandiri balance binary")
+            throw UnsupportedOperationException("Failed to read Mandiri balance binary")
         }
 
         val data = balanceResp.payload()

@@ -24,6 +24,8 @@
     <string name="action_reset">Reset Tampilan</string>
     <string name="action_card_info">Info Kartu</string>
     <string name="copy_balance_toast">Saldo disalin ke clipboard</string>
+    <string name="copy_pan_toast">Nomor kartu disalin ke clipboard</string>
+    <string name="cd_toggle_pan">Tampilkan atau sembunyikan nomor kartu</string>
     <string name="currency_symbol">Rp</string>
 
     <!-- Error States -->
